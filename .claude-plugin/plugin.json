@@ -1,0 +1,12 @@
+{
+  "name": "cqrs-eda",
+  "version": "0.1.0",
+  "description": "CQRS, event-driven and DDD conventions for Go services, with copy-in platform packages (buses, typed handlers, middleware, aggregates).",
+  "author": {
+    "name": "theskyinflames",
+    "email": "jaumearus@gmail.com"
+  },
+  "repository": "https://github.com/theskyinflames/cqrs-eda",
+  "license": "MIT",
+  "keywords": ["go", "golang", "cqrs", "eda", "ddd", "event-driven"]
+}
