@@ -40,7 +40,7 @@ grep -rl --include=*.go 'internal/platform/cqrs"' . | head -1
 | `bus` | `bus.New()` sequential bus (default). `bus.NewConcurrent(timeout, limit)` only when profiling shows dispatch is the bottleneck; call `Wait()` on shutdown. |
 | `cqrs` | `Command`/`Query` (`Name() string`, constant, value receiver). `CommandHandler[C]` returns `([]events.Event, error)`; `QueryHandler[Q, R]` returns `(R, error)`. `RegisterCommand`, `RegisterQuery`, `Send`, `Ask[R]`. `WrapCommand`/`WrapQuery` apply middleware, first = outermost. |
 | `cqrs` middleware | `LogCommandErrors`, `LogQueryErrors`, `PublishEvents(eventBus)`, `WithUnitOfWork(uow)`; `ErrEventsNotPublished`. |
-| `events` | Embed `events.Base` (`events.NewBase(name, aggregateID)`) in concrete events. `events.Register(bus, name, handlers...)`, `events.Publish`, `events.Listen` (channel → bus bridge). |
+| `events` | Embed `events.Base` (`events.NewBase(name, aggregateID)`) in concrete events. `events.Register(bus, name, handlers...)`, `events.Publish`, `events.Listen` (channel → bus bridge). Events nobody subscribes to are skipped, not errors — don't register empty handlers. |
 | `ddd` | Embed `ddd.AggregateRoot`; `RecordEvent` in domain methods, `PullEvents` in the command handler. |
 
 Full source: `<skill-dir>/assets/template/internal/platform/`; wiring example
@@ -84,7 +84,9 @@ has its own layout, fit into it rather than imposing this one.
    and contexts decoupled.
 4. **Business rules live in the domain.** Handlers orchestrate (load, call,
    save); aggregates enforce invariants and record events. Domain errors are
-   sentinel/typed errors in `domain` so adapters can map them.
+   sentinel/typed errors in `domain` (including `ErrNotFound`, which
+   repositories return instead of driver errors like `sql.ErrNoRows`) so
+   adapters can map them without knowing the storage.
 5. **Policies only translate.** An event handler maps an event to a command and
    `cqrs.Send`s it. Command handlers never call other command handlers directly.
    Event handlers must be idempotent: the same event may arrive twice.
@@ -94,8 +96,10 @@ has its own layout, fit into it rather than imposing this one.
    in `main` and reuse it for every command.
 7. **Adapters stay dumb.** HTTP/gRPC/consumer code decodes input, calls
    `cqrs.Send`/`cqrs.Ask`, maps errors to protocol codes, encodes output.
-   Treat `errors.Is(err, cqrs.ErrEventsNotPublished)` as success-with-warning:
-   the state did change.
+   Map every domain error on every route you touch, including existing ones:
+   not found → 404, rule violation → 409/422, invalid input → 400, anything
+   else → 500. Treat `errors.Is(err, cqrs.ErrEventsNotPublished)` as
+   success-with-warning: the state did change.
 8. **Know the limits of in-process events.** `PublishEvents` runs after commit
    but is not atomic with it: a crash in between loses the events. When events
    must not be lost or must reach other services, use the transactional outbox

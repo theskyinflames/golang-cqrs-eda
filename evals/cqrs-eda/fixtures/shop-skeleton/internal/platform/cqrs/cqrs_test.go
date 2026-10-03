@@ -7,9 +7,9 @@ import (
 	"testing"
 	"uuid"
 
-	"example.com/app/internal/platform/bus"
-	"example.com/app/internal/platform/cqrs"
-	"example.com/app/internal/platform/events"
+	"github.com/acme/shop/internal/platform/bus"
+	"github.com/acme/shop/internal/platform/cqrs"
+	"github.com/acme/shop/internal/platform/events"
 )
 
 type cmd struct{}

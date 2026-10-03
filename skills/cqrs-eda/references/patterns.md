@@ -7,7 +7,7 @@ verified with `go vet` and `go test`. On Go < 1.27 the import is
 
 ## Contents
 
-1. Domain: aggregate, event, repository port
+1. Domain: aggregate, event, errors, repository port
 2. Command and handler
 3. Query, read model and handler
 4. Policy: event → command (another bounded context)
@@ -16,9 +16,9 @@ verified with `go vet` and `go test`. On Go < 1.27 the import is
 7. Composition root (`cmd/<service>/main.go`)
 8. Testing a command handler
 
-## 1. Domain: aggregate, event, repository port
+## 1. Domain: aggregate, event, errors, repository port
 
-Pure Go: no SQL, HTTP or bus imports. Invariants live here.
+Pure Go: no SQL, HTTP or bus imports. Invariants and domain errors live here.
 
 `internal/ordering/domain/order.go`
 
@@ -43,7 +43,10 @@ type OrderPlaced struct {
 	Total int64
 }
 
-var ErrInvalidTotal = errors.New("total must be positive")
+var (
+	ErrInvalidTotal = errors.New("total must be positive")
+	ErrNotFound     = errors.New("order not found")
+)
 
 // Order is an aggregate: it guards its invariants and records what happened.
 type Order struct {
@@ -151,7 +154,7 @@ func (h GetOrderHandler) Handle(ctx context.Context, q GetOrder) (OrderView, err
 
 ## 4. Policy: event → command
 
-Lives in the reacting context. Cross-aggregate effects go through events, so they are eventually consistent.
+Lives in the reacting context. Cross-aggregate effects go through events, so they are eventually consistent. Policies may receive the same event twice: the command they send must be idempotent.
 
 `internal/shipping/app/policy.go`
 
@@ -239,7 +242,7 @@ func conn(ctx context.Context, db *sql.DB) querier {
 
 ## 5b. Repository
 
-Implements the write port (domain) and the read port (app).
+Implements the write port (domain) and the read port (app). Translates storage errors into domain errors.
 
 `internal/ordering/infra/postgres/orders.go`
 
@@ -249,6 +252,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"uuid"
 
 	"github.com/acme/shop/internal/ordering/app"
@@ -268,13 +272,16 @@ func (r Orders) OrderByID(ctx context.Context, id uuid.UUID) (app.OrderView, err
 	v := app.OrderView{ID: id}
 	err := conn(ctx, r.DB).QueryRowContext(ctx,
 		`SELECT total FROM orders WHERE id = $1`, id.String()).Scan(&v.Total)
+	if errors.Is(err, sql.ErrNoRows) {
+		return v, domain.ErrNotFound // adapters must not know about sql
+	}
 	return v, err
 }
 ```
 
 ## 6. HTTP driving adapter
 
-Decode → `cqrs.Send`/`cqrs.Ask` → map errors to status codes → encode.
+Decode → `cqrs.Send`/`cqrs.Ask` → map domain errors to status codes → encode.
 
 `internal/ordering/infra/httpapi/handlers.go`
 
@@ -326,7 +333,11 @@ func Routes(mux *http.ServeMux, commands, queries bus.Dispatcher) {
 			return
 		}
 		v, err := cqrs.Ask[app.OrderView](r.Context(), queries, app.GetOrder{OrderID: id})
-		if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrNotFound):
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		case err != nil:
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}

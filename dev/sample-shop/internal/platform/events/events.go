@@ -8,7 +8,7 @@ import (
 	"time"
 	"uuid"
 
-	"example.com/app/internal/platform/bus"
+	"github.com/acme/shop/internal/platform/bus"
 )
 
 // Event is a domain event: a fact that already happened, named in past tense.

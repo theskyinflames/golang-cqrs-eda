@@ -6,8 +6,8 @@ import (
 	"testing"
 	"uuid"
 
-	"example.com/app/internal/platform/bus"
-	"example.com/app/internal/platform/events"
+	"github.com/acme/shop/internal/platform/bus"
+	"github.com/acme/shop/internal/platform/events"
 )
 
 const userCreatedName = "user.created"
