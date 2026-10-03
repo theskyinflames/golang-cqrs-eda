@@ -39,7 +39,7 @@ grep -rl --include=*.go 'internal/platform/cqrs"' . | head -1
 |---|---|
 | `bus` | `bus.New()` sequential bus (default). `bus.NewConcurrent(timeout, limit)` only when profiling shows dispatch is the bottleneck; call `Wait()` on shutdown. |
 | `cqrs` | `Command`/`Query` (`Name() string`, constant, value receiver). `CommandHandler[C]` returns `([]events.Event, error)`; `QueryHandler[Q, R]` returns `(R, error)`. `RegisterCommand`, `RegisterQuery`, `Send`, `Ask[R]`. `WrapCommand`/`WrapQuery` apply middleware, first = outermost. |
-| `cqrs` middleware | `LogCommandErrors`, `LogQueryErrors`, `PublishEvents(eventBus)`, `WithUnitOfWork(uow)`; `ErrEventsNotPublished`. |
+| `cqrs` middleware | `LogCommandErrors(log, expected...)`, `LogQueryErrors(log, expected...)` — pass the domain errors that are normal rejections (not found, rule violations, invalid input) so they log at Info, not Error. `PublishEvents(eventBus)`, `WithUnitOfWork(uow)`; `ErrEventsNotPublished`. |
 | `events` | Embed `events.Base` (`events.NewBase(name, aggregateID)`) in concrete events. `events.Register(bus, name, handlers...)`, `events.Publish`, `events.Listen` (channel → bus bridge). Events nobody subscribes to are skipped, not errors — don't register empty handlers. |
 | `ddd` | Embed `ddd.AggregateRoot`; `RecordEvent` in domain methods, `PullEvents` in the command handler. |
 
@@ -93,7 +93,9 @@ has its own layout, fit into it rather than imposing this one.
 6. **Middleware order:** `LogCommandErrors → PublishEvents → WithUnitOfWork →
    handler`. The unit of work is innermost so events are published only after
    commit; logging is outermost so it sees every failure. Build the slice once
-   in `main` and reuse it for every command.
+   in `main` and reuse it for every command, passing the context's expected
+   domain errors to the logging middleware so routine 404/409/422 outcomes
+   don't page anyone.
 7. **Adapters stay dumb.** HTTP/gRPC/consumer code decodes input, calls
    `cqrs.Send`/`cqrs.Ask`, maps errors to protocol codes, encodes output.
    Map every domain error on every route you touch, including existing ones:
@@ -107,7 +109,12 @@ has its own layout, fit into it rather than imposing this one.
    bus with `events.Listen`. Don't grow the platform into a broker client.
 9. **Queries return read models**, not aggregates — DTOs shaped for the caller,
    loaded through a read-side port that may query the DB directly.
-10. **Test handlers with hand-written fakes** of the ports, table-driven, and
+10. **Repositories persist state, never the aggregate value.** Map the
+    aggregate to a record (or snapshot) on save and rebuild it on load — in
+    memory too. Storing the struct itself also stores its pending events
+    (replayed and republished on the next load: double side effects) and
+    shares pointers between requests (data races).
+11. **Test handlers with hand-written fakes** of the ports, table-driven, and
     assert on returned events and errors. Test aggregates directly.
 
 ## 5. Workflows
@@ -142,9 +149,13 @@ section 7 of `references/patterns.md`, then add use cases as above.
 ## 6. Reviewing code
 
 When asked to review, check the rules in section 4 and report each violation
-with file:line, the rule broken and a concrete fix. Common findings: query
+with file:line, what goes wrong (in plain words — the user hasn't read this
+skill, so never cite rule numbers) and a concrete fix. Lead with runtime
+bugs, then design violations. Common findings: query
 handlers that write; command handlers returning data or touching two
 aggregates; business rules in handlers or adapters; handlers calling handlers;
 `infra` types imported by `domain`/`app`; middleware with the unit of work
 outside `PublishEvents`; event handlers with side effects that aren't
-idempotent; events published before commit.
+idempotent; events published before commit; `Name()` depending on fields;
+`cqrs.Ask[R]` with an `R` that differs from the handler's result type;
+ignored registration errors; repositories storing the aggregate struct.

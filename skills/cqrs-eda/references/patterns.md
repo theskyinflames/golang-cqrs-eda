@@ -11,7 +11,7 @@ verified with `go vet` and `go test`. On Go < 1.27 the import is
 2. Command and handler
 3. Query, read model and handler
 4. Policy: event → command (another bounded context)
-5. Unit of work and repository (database/sql)
+5. Unit of work and repositories (database/sql, in-memory)
 6. HTTP driving adapter
 7. Composition root (`cmd/<service>/main.go`)
 8. Testing a command handler
@@ -62,6 +62,12 @@ func PlaceOrder(id uuid.UUID, total int64) (*Order, error) {
 	o := &Order{AggregateRoot: ddd.NewAggregateRoot(id), total: total}
 	o.RecordEvent(OrderPlaced{Base: events.NewBase(OrderPlacedName, id), Total: total})
 	return o, nil
+}
+
+// RestoreOrder rebuilds an Order from stored state. It records no events:
+// loading is not a state change.
+func RestoreOrder(id uuid.UUID, total int64) *Order {
+	return &Order{AggregateRoot: ddd.NewAggregateRoot(id), total: total}
 }
 
 func (o *Order) Total() int64 { return o.total }
@@ -279,6 +285,70 @@ func (r Orders) OrderByID(ctx context.Context, id uuid.UUID) (app.OrderView, err
 }
 ```
 
+## 5c. In-memory repository
+
+Stores a record, not the aggregate, and rebuilds it with a domain constructor that records no events.
+
+`internal/ordering/infra/memory/orders.go`
+
+```go
+// Package memory is an in-memory adapter for tests and prototypes.
+package memory
+
+import (
+	"context"
+	"sync"
+	"uuid"
+
+	"github.com/acme/shop/internal/ordering/app"
+	"github.com/acme/shop/internal/ordering/domain"
+)
+
+// record is the stored state. Never store *domain.Order itself: it would keep
+// pending events (republished on the next load) and share pointers.
+type record struct {
+	total int64
+}
+
+// Orders implements domain.OrderRepository and app.OrderReader in memory.
+type Orders struct {
+	mu sync.RWMutex
+	m  map[uuid.UUID]record
+}
+
+func (r *Orders) Save(_ context.Context, o *domain.Order) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.m == nil {
+		r.m = make(map[uuid.UUID]record)
+	}
+	r.m[o.ID()] = record{total: o.Total()}
+	return nil
+}
+
+// ByID loads the aggregate for a command.
+func (r *Orders) ByID(_ context.Context, id uuid.UUID) (*domain.Order, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	rec, ok := r.m[id]
+	if !ok {
+		return nil, domain.ErrNotFound
+	}
+	return domain.RestoreOrder(id, rec.total), nil
+}
+
+// OrderByID serves the read side directly from the record.
+func (r *Orders) OrderByID(_ context.Context, id uuid.UUID) (app.OrderView, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	rec, ok := r.m[id]
+	if !ok {
+		return app.OrderView{}, domain.ErrNotFound
+	}
+	return app.OrderView{ID: id, Total: rec.total}, nil
+}
+```
+
 ## 6. HTTP driving adapter
 
 Decode → `cqrs.Send`/`cqrs.Ask` → map domain errors to status codes → encode.
@@ -403,16 +473,19 @@ func run() error {
 		uow      = postgres.UnitOfWork{DB: db}
 	)
 
+	// Normal rejections log at Info; anything else at Error.
+	expected := []error{domain.ErrInvalidTotal, domain.ErrNotFound}
+
 	// Every command: log → publish events after commit → transaction → handler.
 	commandMws := []cqrs.CommandMiddleware{
-		cqrs.LogCommandErrors(log),
+		cqrs.LogCommandErrors(log, expected...),
 		cqrs.PublishEvents(evts),
 		cqrs.WithUnitOfWork(uow),
 	}
 
 	err = errors.Join(
 		cqrs.RegisterCommand(commands, cqrs.WrapCommand(app.PlaceOrderHandler{Orders: orders}, commandMws...)),
-		cqrs.RegisterQuery(queries, cqrs.WrapQuery(app.GetOrderHandler{Orders: orders}, cqrs.LogQueryErrors(log))),
+		cqrs.RegisterQuery(queries, cqrs.WrapQuery(app.GetOrderHandler{Orders: orders}, cqrs.LogQueryErrors(log, expected...))),
 		events.Register(evts, domain.OrderPlacedName, events.Handler[domain.OrderPlaced](shipping.ShipWhenOrderPlaced{Commands: commands})),
 	)
 	if err != nil {

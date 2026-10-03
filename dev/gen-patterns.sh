@@ -24,7 +24,7 @@ verified with `go vet` and `go test`. On Go < 1.27 the import is
 2. Command and handler
 3. Query, read model and handler
 4. Policy: event → command (another bounded context)
-5. Unit of work and repository (database/sql)
+5. Unit of work and repositories (database/sql, in-memory)
 6. HTTP driving adapter
 7. Composition root (`cmd/<service>/main.go`)
 8. Testing a command handler
@@ -35,6 +35,7 @@ sec "3. Query, read model and handler" "Queries return views shaped for the call
 sec "4. Policy: event → command" "Lives in the reacting context. Cross-aggregate effects go through events, so they are eventually consistent. Policies may receive the same event twice: the command they send must be idempotent." internal/shipping/app/policy.go
 sec "5a. Unit of work (database/sql)" "Puts the transaction in the context; repositories pick it up via \`conn\`. Adapt to pgx by swapping the types." internal/ordering/infra/postgres/uow.go
 sec "5b. Repository" "Implements the write port (domain) and the read port (app). Translates storage errors into domain errors." internal/ordering/infra/postgres/orders.go
+sec "5c. In-memory repository" "Stores a record, not the aggregate, and rebuilds it with a domain constructor that records no events." internal/ordering/infra/memory/orders.go
 sec "6. HTTP driving adapter" "Decode → \`cqrs.Send\`/\`cqrs.Ask\` → map domain errors to status codes → encode." internal/ordering/infra/httpapi/handlers.go
 sec "7. Composition root" "The only place that knows every layer. Register the SQL driver (e.g. \`_ \"github.com/jackc/pgx/v5/stdlib\"\`) in real code." cmd/shop/main.go
 sec "8. Testing a command handler" "Table-driven, hand-written fakes for ports; assert returned events, not internals." internal/ordering/app/place_order_test.go

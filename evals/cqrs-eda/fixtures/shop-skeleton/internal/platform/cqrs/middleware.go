@@ -67,31 +67,44 @@ func WrapQuery[Q Query, R any](h QueryHandler[Q, R], mws ...QueryMiddleware) Que
 	})
 }
 
-// LogCommandErrors logs failed commands. It logs the name only, never the
-// payload, to keep personal data out of logs.
-func LogCommandErrors(l *slog.Logger) CommandMiddleware {
+// LogCommandErrors logs failed commands by name, never the payload, to keep
+// personal data out of logs. Errors matching one of expected (errors.Is) are
+// normal rejections — not found, rule violations, invalid input — and are
+// logged at Info as "command rejected"; anything else is logged at Error.
+func LogCommandErrors(l *slog.Logger, expected ...error) CommandMiddleware {
 	return func(next CommandFunc) CommandFunc {
 		return func(ctx context.Context, cmd Command) ([]events.Event, error) {
 			evs, err := next(ctx, cmd)
 			if err != nil {
-				l.ErrorContext(ctx, "command failed", "command", cmd.Name(), "error", err)
+				logErr(ctx, l, "command", cmd.Name(), err, expected)
 			}
 			return evs, err
 		}
 	}
 }
 
-// LogQueryErrors logs failed queries by name.
-func LogQueryErrors(l *slog.Logger) QueryMiddleware {
+// LogQueryErrors logs failed queries by name. expected works as in
+// LogCommandErrors.
+func LogQueryErrors(l *slog.Logger, expected ...error) QueryMiddleware {
 	return func(next QueryFunc) QueryFunc {
 		return func(ctx context.Context, q Query) (any, error) {
 			v, err := next(ctx, q)
 			if err != nil {
-				l.ErrorContext(ctx, "query failed", "query", q.Name(), "error", err)
+				logErr(ctx, l, "query", q.Name(), err, expected)
 			}
 			return v, err
 		}
 	}
+}
+
+func logErr(ctx context.Context, l *slog.Logger, kind, name string, err error, expected []error) {
+	for _, e := range expected {
+		if errors.Is(err, e) {
+			l.InfoContext(ctx, kind+" rejected", kind, name, "error", err)
+			return
+		}
+	}
+	l.ErrorContext(ctx, kind+" failed", kind, name, "error", err)
 }
 
 // ErrEventsNotPublished means the command succeeded (state is changed) but

@@ -1,8 +1,11 @@
 package cqrs_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 	"strings"
 	"testing"
 	"uuid"
@@ -113,5 +116,30 @@ func TestRegisterAndDispatch(t *testing.T) {
 	}
 	if _, err := cqrs.Ask[int](t.Context(), &b, qry{}); !errors.Is(err, cqrs.ErrUnexpectedResult) {
 		t.Fatalf("want ErrUnexpectedResult, got %v", err)
+	}
+}
+
+func TestLogCommandErrors(t *testing.T) {
+	errRule := errors.New("rule violated")
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{name: "expected error is a rejection", err: fmt.Errorf("wrapped: %w", errRule), want: `level=INFO msg="command rejected"`},
+		{name: "unexpected error is a failure", err: errors.New("db down"), want: `level=ERROR msg="command failed"`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			l := slog.New(slog.NewTextHandler(&buf, nil))
+			h := cqrs.WrapCommand(cqrs.CommandHandlerFunc[cmd](func(context.Context, cmd) ([]events.Event, error) {
+				return nil, tt.err
+			}), cqrs.LogCommandErrors(l, errRule))
+			_, _ = h.Handle(t.Context(), cmd{})
+			if !strings.Contains(buf.String(), tt.want) {
+				t.Fatalf("log %q does not contain %q", buf.String(), tt.want)
+			}
+		})
 	}
 }

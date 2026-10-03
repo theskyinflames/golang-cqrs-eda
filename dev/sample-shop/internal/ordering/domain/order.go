@@ -39,6 +39,12 @@ func PlaceOrder(id uuid.UUID, total int64) (*Order, error) {
 	return o, nil
 }
 
+// RestoreOrder rebuilds an Order from stored state. It records no events:
+// loading is not a state change.
+func RestoreOrder(id uuid.UUID, total int64) *Order {
+	return &Order{AggregateRoot: ddd.NewAggregateRoot(id), total: total}
+}
+
 func (o *Order) Total() int64 { return o.total }
 
 // OrderRepository is a port: the domain defines it, infra implements it.

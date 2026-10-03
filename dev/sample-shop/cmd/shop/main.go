@@ -48,16 +48,19 @@ func run() error {
 		uow      = postgres.UnitOfWork{DB: db}
 	)
 
+	// Normal rejections log at Info; anything else at Error.
+	expected := []error{domain.ErrInvalidTotal, domain.ErrNotFound}
+
 	// Every command: log → publish events after commit → transaction → handler.
 	commandMws := []cqrs.CommandMiddleware{
-		cqrs.LogCommandErrors(log),
+		cqrs.LogCommandErrors(log, expected...),
 		cqrs.PublishEvents(evts),
 		cqrs.WithUnitOfWork(uow),
 	}
 
 	err = errors.Join(
 		cqrs.RegisterCommand(commands, cqrs.WrapCommand(app.PlaceOrderHandler{Orders: orders}, commandMws...)),
-		cqrs.RegisterQuery(queries, cqrs.WrapQuery(app.GetOrderHandler{Orders: orders}, cqrs.LogQueryErrors(log))),
+		cqrs.RegisterQuery(queries, cqrs.WrapQuery(app.GetOrderHandler{Orders: orders}, cqrs.LogQueryErrors(log, expected...))),
 		events.Register(evts, domain.OrderPlacedName, events.Handler[domain.OrderPlaced](shipping.ShipWhenOrderPlaced{Commands: commands})),
 	)
 	if err != nil {
