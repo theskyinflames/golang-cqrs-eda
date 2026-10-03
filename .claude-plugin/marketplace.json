@@ -1,0 +1,24 @@
+{
+  "name": "theskyinflames",
+  "description": "Claude Code plugins for Go development by theskyinflames.",
+  "owner": {
+    "name": "Jaume Arús",
+    "email": "jaumearus@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "cqrs-eda",
+      "source": "./",
+      "description": "CQRS, event-driven and DDD conventions for Go services, with copy-in platform packages (buses, typed handlers, middleware, aggregates).",
+      "version": "0.1.0",
+      "category": "development",
+      "keywords": [
+        "go",
+        "golang",
+        "cqrs",
+        "eda",
+        "ddd"
+      ]
+    }
+  ]
+}
