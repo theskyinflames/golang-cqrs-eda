@@ -45,8 +45,19 @@ a modernized version of that library into Go projects (copy-in model).
 
 - [ ] Optional: check the new description on Opus (~60 sessions) with
       `evals/cqrs-eda/trigger/run.sh eval --model claude-opus-5-5 --num-workers 5 --verbose`.
-- [ ] **Quality eval iteration 4** to validate rule 0 (checks 1.15, 2.13, 3.12 not run yet)
-      and the review wording change (no rule numbers, runtime bugs first).
+- [ ] **Quality eval iteration 4** (in progress, with skill only, on Sonnet 5.5) to validate
+      rule 0 and the review wording change (no rule numbers, runtime bugs first). The baseline
+      is skipped because iterations 1–3 already measured it and nothing new targets it.
+      - [x] Eval 3 (review): 11/12. Rule 0 (3.12) found; no rule numbers; runtime bugs first.
+            Missed 3.4: it read only `internal/billing` and never saw the duplicate
+            `events.Register` in `cmd/shop/main.go`.
+      - [x] Eval 1 (orders from skeleton): 15/15, rule 0 (1.15) included.
+      - [ ] Eval 2 (new invoicing service).
+      - [ ] Fix the 3.4 miss: SKILL.md section 6 should say to also read where the reviewed
+            code is wired (`cmd/*/main.go`). Then re-run eval 3.
+      - [ ] Note in `evals/cqrs-eda/` that quality eval workspaces must live outside the repo
+            (e.g. `$TMPDIR/cqrs-eda-workspace`): with the repo loaded as `--plugin-dir`,
+            Claude Code refuses edits inside it as sensitive files, so coding evals write nothing.
 - [ ] Optional reviewer agent (`agents/cqrs-reviewer.md`); covered by SKILL.md section 6 for now.
 - [ ] Use the plugin in real projects:
       `/plugin marketplace add theskyinflames/golang-cqrs-eda`, then
