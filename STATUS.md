@@ -21,46 +21,29 @@ a modernized version of that library into Go projects (copy-in model).
 - [x] Rule 0: every use case is a command or query in the application layer;
       eval checks 1.15, 2.13 and 3.12 added for it
 - [x] Trigger eval set: 20 queries (10 should trigger, 10 near-misses), reviewed
-- [x] Trigger eval fixed to count skill loads anywhere in the run, inside a Go fixture
-      (`evals/cqrs-eda/trigger/`)
+- [x] Trigger eval fixed (`evals/cqrs-eda/trigger/`, see its README): upstream skill-creator
+      only counted the skill if it was the first tool call, ran queries in `~` with no Go
+      code, and ran parallel queries in one shared project where each session saw several
+      identical skill copies. Run results and traces are in `trigger/results/`.
+- [x] Trigger description: applied iteration 2 of the Sonnet 5.5 loop
+      (`trigger/candidates.json`). Measured on Sonnet with the fixed eval (2026-10-04,
+      `trigger/results/2026-10-04-sonnet-isolated/`):
+
+      | | Previous | Iteration 2 (applied) |
+      |---|---|---|
+      | Queries passed | 17/20 | 20/20 |
+      | Should-trigger runs that loaded the skill | 30/30 | 30/30 |
+      | Near-miss runs that loaded the skill | 7/30 | 3/30 |
+
+      Queries run inside a CQRS shop fixture, which makes near-misses look more related
+      than in a random project. Earlier numbers under `results/2026-10-04-sonnet/` were
+      measured with the broken eval and aren't comparable.
 - [x] Push to GitHub (`theskyinflames/golang-cqrs-eda`)
 
 ## Pending
 
-- [ ] **Trigger description optimization.** A full 5-iteration loop on Sonnet 5.5
-      (2026-10-04) found no clear winner: precision stayed 100%, recall 17–33%, and the best
-      candidate (iteration 2) beat the current description by one held-out query.
-      The low recall came from the eval, not the description: upstream skill-creator counts
-      a miss whenever the first tool call isn't the skill, its 30 s timeout is short, and run
-      from inside `~/.claude` it used `~` as the project, so queries saw no Go code.
-      Fixed in `evals/cqrs-eda/trigger/` (see its README); candidates in `candidates.json`.
-      Comparison with the patched eval on Sonnet (2026-10-04, results in
-      `evals/cqrs-eda/trigger/results/2026-10-04-sonnet/`):
-
-      | | Current | Iteration 2 |
-      |---|---|---|
-      | Queries passed | 10/20 | 12/20 |
-      | Should-trigger queries passed | 0/10 | 2/10 |
-      | Should-trigger runs that loaded the skill | 4/30 | 9/30 |
-      | Near-miss runs that loaded the skill | 0/30 | 0/30 |
-
-      Iteration 2 is probably a bit better (5 of the 6 queries that changed went up) but
-      not proven, and recall is still very low for both, so wording isn't the whole story.
-      Traces of 6 runs on 3 queries that scored 0/9 in the eval
-      (`results/2026-10-04-sonnet/traces.json`): with the current description, Claude
-      loaded the skill in 5 of 6, four of them as its first action. The eval was the
-      problem again: parallel runs shared one project, so each session saw up to 5
-      identical skill copies, and loading another run's copy counted as a miss. Fixed:
-      each run now gets its own copy of the project.
-      Next: re-run both comparison commands below in a fresh usage window (~120
-      sessions; paid extra usage is on, so watch the limit). Expect high recall from
-      both; if one still clearly wins, check it on Opus before applying. Commands:
-      ```sh
-      evals/cqrs-eda/trigger/run.sh eval --model claude-sonnet-5-5 --num-workers 5 --verbose
-      evals/cqrs-eda/trigger/run.sh eval --model claude-sonnet-5-5 --num-workers 5 --verbose \
-        --description "$(jq -r '.candidates[] | select(.iteration==2) | .description' \
-          evals/cqrs-eda/trigger/candidates.json)"
-      ```
+- [ ] Optional: check the new description on Opus (~60 sessions) with
+      `evals/cqrs-eda/trigger/run.sh eval --model claude-opus-5-5 --num-workers 5 --verbose`.
 - [ ] **Quality eval iteration 4** to validate rule 0 (checks 1.15, 2.13, 3.12 not run yet)
       and the review wording change (no rule numbers, runtime bugs first).
 - [ ] Optional reviewer agent (`agents/cqrs-reviewer.md`); covered by SKILL.md section 6 for now.
