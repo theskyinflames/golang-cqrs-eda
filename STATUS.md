@@ -37,6 +37,12 @@ a modernized version of that library into Go projects (copy-in model).
       Next: `run.sh eval` on Sonnet for the current description and iteration 2's
       (~120 short sessions, needs a fresh usage window); if one clearly wins, check it on
       Opus before applying.
+      ```sh
+      evals/cqrs-eda/trigger/run.sh eval --model claude-sonnet-5-5 --num-workers 5 --verbose
+      evals/cqrs-eda/trigger/run.sh eval --model claude-sonnet-5-5 --num-workers 5 --verbose \
+        --description "$(jq -r '.candidates[] | select(.iteration==2) | .description' \
+          evals/cqrs-eda/trigger/candidates.json)"
+      ```
 - [ ] **Quality eval iteration 4** to validate rule 0 (checks 1.15, 2.13, 3.12 not run yet)
       and the review wording change (no rule numbers, runtime bugs first).
 - [ ] Optional reviewer agent (`agents/cqrs-reviewer.md`); covered by SKILL.md section 6 for now.
