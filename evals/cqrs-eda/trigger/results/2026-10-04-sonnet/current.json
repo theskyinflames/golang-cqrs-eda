@@ -1,0 +1,171 @@
+{
+  "skill_name": "cqrs-eda",
+  "description": "CQRS, event-driven (EDA) and DDD conventions for Go services, with copy-in platform packages (command/query/event buses, typed generic handlers, middleware for logging, transactions and event publishing, aggregate roots). Use this skill whenever working on a Go service that has, or should have, commands, queries, command/query handlers, domain events, event handlers or policies, aggregates, a command bus or event bus, or a unit of work \u2014 including when the user just asks to \"add an endpoint that creates/updates X\", \"react when Y happens\", \"add a use case\", or \"set up a new Go service\" with DDD/hexagonal structure, even if CQRS is never named. Also use it to review Go code for CQRS/EDA violations.",
+  "results": [
+    {
+      "query": "we're spinning up a new go microservice for subscription billing \u2014 plans, subscribe, cancel, renew. set up the repo structure, I want it event driven so other services can react to subscription changes",
+      "should_trigger": true,
+      "trigger_rate": 0.3333333333333333,
+      "triggers": 1,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "in services/orders (go) add an endpoint to refund an order. refunds for orders older than 30 days aren't allowed, and accounting needs to know whenever a refund happens",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "can you review internal/inventory? my teammate added a ReserveStock handler that also decrements the warehouse aggregate and sends an email directly, something smells off but I can't say what",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "add a use case to approve a loan application in our Go service. The approval rules already live in the LoanApplication aggregate, just wire it up through the command bus and expose it over http",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "when a payment fails in internal/payments the related order should go back to pending. how do I wire that up in our go code? we already raise domain events from the aggregates",
+      "should_trigger": true,
+      "trigger_rate": 0.3333333333333333,
+      "triggers": 1,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "refactor this go handler: it validates the request, updates postgres in a transaction, publishes to our event bus and returns the updated user. I'd like writes and reads separated properly and the side effects decoupled",
+      "should_trigger": true,
+      "trigger_rate": 0.3333333333333333,
+      "triggers": 1,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "GET /customers/{id}/balance returns 500 for unknown customers and every 409 shows up as ERROR in our logs. can you fix both? it's the go service that uses internal/platform/cqrs",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "set up a go project for a warehouse service with a DDD / hexagonal structure, domain events and a unit of work over postgres",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "add 'mark shipment as delivered' to the shipping service (Go). the ordering context needs to listen for deliveries to close the order. keep it consistent with how PlaceShipment is done",
+      "should_trigger": true,
+      "trigger_rate": 0.3333333333333333,
+      "triggers": 1,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "our in-memory repository (go) returns the same *Order pointer to every caller and after reloading an order we sometimes see its OrderPlaced event fired a second time. why, and how should the repo look?",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "explain the difference between CQRS and event sourcing, ideally with a java spring boot example",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "my go http server leaks goroutines when clients disconnect mid request. here's the handler, how do I propagate context cancellation properly?",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "write a kafka consumer in go that reads json messages from the 'clicks' topic and writes them to clickhouse in batches of 1000, with graceful shutdown",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "set up a new go CLI tool with cobra that converts csv files to parquet, with a --schema flag",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "in my typescript nestjs app, how do I use @nestjs/cqrs to dispatch a command from a controller and handle it in a saga?",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "write table-driven go unit tests for this function that parses ISO8601 durations like P1DT2H",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "add structured logging with slog to this go function and include the request id from the context in every line",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "design a postgres schema for an event store with snapshots and optimistic concurrency on the stream version, we're going full event sourcing",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "build a react dashboard that shows orders per day as a bar chart, reading from our /orders API",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "benchmark these two go implementations of a ring buffer and tell me which allocates less",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total": 20,
+    "passed": 10,
+    "failed": 10
+  }
+}

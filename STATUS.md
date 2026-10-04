@@ -34,9 +34,24 @@ a modernized version of that library into Go projects (copy-in model).
       a miss whenever the first tool call isn't the skill, its 30 s timeout is short, and run
       from inside `~/.claude` it used `~` as the project, so queries saw no Go code.
       Fixed in `evals/cqrs-eda/trigger/` (see its README); candidates in `candidates.json`.
-      Next: `run.sh eval` on Sonnet for the current description and iteration 2's
-      (~120 short sessions, needs a fresh usage window); if one clearly wins, check it on
-      Opus before applying.
+      Comparison with the patched eval on Sonnet (2026-10-04, results in
+      `evals/cqrs-eda/trigger/results/2026-10-04-sonnet/`):
+
+      | | Current | Iteration 2 |
+      |---|---|---|
+      | Queries passed | 10/20 | 12/20 |
+      | Should-trigger queries passed | 0/10 | 2/10 |
+      | Should-trigger runs that loaded the skill | 4/30 | 9/30 |
+      | Near-miss runs that loaded the skill | 0/30 | 0/30 |
+
+      Iteration 2 is probably a bit better (5 of the 6 queries that changed went up) but
+      not proven, and recall is still very low for both, so wording isn't the whole story.
+      The results don't record how a miss ended (answered without the skill, 8-tool-call
+      cap, or 90 s timeout).
+      Next: trace ~6 runs on 2–3 queries that never triggered (inventory review, orders
+      refund, shared `*Order` pointer), logging every tool call and how the run ended.
+      That decides whether to fix the eval again or rewrite the description. Hold off on
+      another loop or the Opus check until then. Commands used for the comparison:
       ```sh
       evals/cqrs-eda/trigger/run.sh eval --model claude-sonnet-5-5 --num-workers 5 --verbose
       evals/cqrs-eda/trigger/run.sh eval --model claude-sonnet-5-5 --num-workers 5 --verbose \
