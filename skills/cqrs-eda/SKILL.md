@@ -159,7 +159,9 @@ section 7 of `references/patterns.md`, then add use cases as above.
 
 When asked to review, check the rules in section 4 (start with rule 0: any
 adapter, job or policy that reaches the domain or a repository without going
-through a command or query) and report each violation
+through a command or query). Also read where the code under review is wired
+(`cmd/*/main.go` or the helpers it calls), even if the user named only one
+package: registration and middleware bugs live there. Report each violation
 with file:line, what goes wrong (in plain words — the user hasn't read this
 skill, so never cite rule numbers) and a concrete fix. Lead with runtime
 bugs, then design violations. Common findings: query
