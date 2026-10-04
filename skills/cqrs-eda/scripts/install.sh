@@ -44,7 +44,9 @@ mkdir -p "$dst"
 for pkg in "${pkgs[@]}"; do
 	cp -R "$src/$pkg" "$dst/$pkg"
 done
-mapfile -t files < <(for pkg in "${pkgs[@]}"; do find "$dst/$pkg" -name '*.go'; done)
+# No mapfile: macOS ships bash 3.2.
+files=()
+while IFS= read -r f; do files+=("$f"); done < <(for pkg in "${pkgs[@]}"; do find "$dst/$pkg" -name '*.go'; done)
 sed -i.bak "s#\"$placeholder/internal/platform/#\"$module/internal/platform/#g" "${files[@]}"
 
 if ((major == 1 && minor < 27)); then

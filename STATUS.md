@@ -40,24 +40,22 @@ a modernized version of that library into Go projects (copy-in model).
       measured with the broken eval and aren't comparable.
 - [x] Push to GitHub (`theskyinflames/golang-cqrs-eda`)
 - [x] Note in the old `theskyinflames/cqrs-eda` repo (still GPL-3.0) pointing to this plugin
+- [x] Quality eval iteration 4 (with skill only, Sonnet 5.5, 2026-10-05): confirmed rule 0
+      (checks 1.15, 2.13, 3.12) and the review wording (no rule numbers, runtime bugs first).
+      The baseline was skipped: iterations 1–3 measured it and nothing new targets it.
+      Fixes it drove:
+      - `install.sh` used `mapfile`, which macOS's bash 3.2 lacks, so it stopped before
+        rewriting imports and running vet + tests. Now a `while read` loop; checked with
+        `/bin/bash` on Go 1.27 and 1.25.
+      - Reviews read only the named package and missed wiring bugs in `main.go`.
+        SKILL.md section 6 now says to read where the reviewed code is wired.
+      - `evals/cqrs-eda/README.md`: quality eval workspaces must live outside the repo,
+        since edits inside a `--plugin-dir` are refused as sensitive files.
 
 ## Pending
 
 - [ ] Optional: check the new description on Opus (~60 sessions) with
       `evals/cqrs-eda/trigger/run.sh eval --model claude-opus-5-5 --num-workers 5 --verbose`.
-- [ ] **Quality eval iteration 4** (in progress, with skill only, on Sonnet 5.5) to validate
-      rule 0 and the review wording change (no rule numbers, runtime bugs first). The baseline
-      is skipped because iterations 1–3 already measured it and nothing new targets it.
-      - [x] Eval 3 (review): 11/12. Rule 0 (3.12) found; no rule numbers; runtime bugs first.
-            Missed 3.4: it read only `internal/billing` and never saw the duplicate
-            `events.Register` in `cmd/shop/main.go`.
-      - [x] Eval 1 (orders from skeleton): 15/15, rule 0 (1.15) included.
-      - [ ] Eval 2 (new invoicing service).
-      - [ ] Fix the 3.4 miss: SKILL.md section 6 should say to also read where the reviewed
-            code is wired (`cmd/*/main.go`). Then re-run eval 3.
-      - [ ] Note in `evals/cqrs-eda/` that quality eval workspaces must live outside the repo
-            (e.g. `$TMPDIR/cqrs-eda-workspace`): with the repo loaded as `--plugin-dir`,
-            Claude Code refuses edits inside it as sensitive files, so coding evals write nothing.
 - [ ] Optional reviewer agent (`agents/cqrs-reviewer.md`); covered by SKILL.md section 6 for now.
 - [ ] Use the plugin in real projects:
       `/plugin marketplace add theskyinflames/golang-cqrs-eda`, then
@@ -70,6 +68,7 @@ a modernized version of that library into Go projects (copy-in model).
 | 1 | 100% | 85% | events with no subscribers no longer fail; not found → 404 rule |
 | 2 | 100% | 79% | sharper evals; repositories return a domain `ErrNotFound` |
 | 3 | 100% | 89% | expected rejections log at Info; repositories persist state, not aggregates |
+| 4 | 39/40, then 12/12 on the eval 3 re-run | not run | `install.sh` on bash 3.2; reviews read `main.go` wiring |
 
 The skill's clear win is new services (12/12 vs 8/12 in iteration 3). In projects
 that already follow the conventions, Claude copies them even without the skill.
