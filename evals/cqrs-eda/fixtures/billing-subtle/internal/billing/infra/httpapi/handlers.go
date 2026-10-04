@@ -73,3 +73,20 @@ func writeErr(w http.ResponseWriter, err error) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	}
 }
+
+// CustomerRoutes exposes customer data.
+func CustomerRoutes(mux *http.ServeMux, customers domain.CustomerRepository) {
+	mux.HandleFunc("GET /customers/{id}/balance", func(w http.ResponseWriter, r *http.Request) {
+		id, err := uuid.Parse(r.PathValue("id"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		c, err := customers.ByID(r.Context(), id)
+		if err != nil {
+			writeErr(w, err)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]int64{"balance": c.Balance()})
+	})
+}

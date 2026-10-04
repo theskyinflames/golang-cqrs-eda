@@ -91,6 +91,7 @@ func run() error {
 	mux := http.NewServeMux()
 	httpapi.Routes(mux, commands, queries)
 	billinghttp.Routes(mux, commands, queries)
+	billinghttp.CustomerRoutes(mux, customers)
 	srv := &http.Server{Addr: ":8080", Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 
 	go func() {

@@ -63,6 +63,10 @@
         {
           "id": "1.14",
           "text": "The in-memory repository stores state (a record/snapshot/copy without pending events), not the live aggregate pointer, so loading an order never replays old events"
+        },
+        {
+          "id": "1.15",
+          "text": "Every use case (place, get, cancel) is a command or query handled in the app layer; HTTP handlers only call cqrs.Send/cqrs.Ask and never call repositories, aggregates or service structs directly"
         }
       ]
     },
@@ -120,6 +124,10 @@
         {
           "id": "2.12",
           "text": "Expected domain rejections (not found, already paid, invalid input) are not logged at ERROR level"
+        },
+        {
+          "id": "2.13",
+          "text": "Every use case (create, mark paid, list unpaid) is a command or query handled in the app layer and reached through a bus; HTTP handlers never call repositories, aggregates or an application-service struct directly"
         }
       ]
     },
@@ -173,6 +181,10 @@
         {
           "id": "3.11",
           "text": "Finds that the in-memory store persists the aggregate including its pending events (infra/memory/store.go:~22), so loading an invoice to pay it republishes IssueInvoiceEvent and charges the customer again"
+        },
+        {
+          "id": "3.12",
+          "text": "Finds that GET /customers/{id}/balance (infra/httpapi/handlers.go, CustomerRoutes) reads the repository directly instead of going through a query (e.g. GetCustomerBalance) dispatched with cqrs.Ask"
         }
       ]
     }

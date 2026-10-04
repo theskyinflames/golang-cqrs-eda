@@ -67,6 +67,15 @@ has its own layout, fit into it rather than imposing this one.
 
 ## 4. Rules, and why
 
+0. **Every use case is a command or a query in `app/`.** This is the
+   application layer of the hexagon: each thing the system can do — however
+   small, including simple reads — is a command or query with its own handler,
+   dispatched through the bus. Driving adapters (HTTP, gRPC, CLI, cron jobs,
+   message consumers) and policies only `cqrs.Send`/`cqrs.Ask`; they never
+   call repositories, aggregates or "service" structs directly, and there is
+   no application-service layer beside the handlers. This keeps one entry
+   point per use case, so middleware (logging, transactions, events) applies
+   uniformly and use cases are testable without transport.
 1. **Commands change state; queries don't.** A command handler returns only
    events and an error, never read data. A query handler never writes and never
    raises events. Mixing them breaks the ability to scale, cache and reason
@@ -148,7 +157,9 @@ section 7 of `references/patterns.md`, then add use cases as above.
 
 ## 6. Reviewing code
 
-When asked to review, check the rules in section 4 and report each violation
+When asked to review, check the rules in section 4 (start with rule 0: any
+adapter, job or policy that reaches the domain or a repository without going
+through a command or query) and report each violation
 with file:line, what goes wrong (in plain words — the user hasn't read this
 skill, so never cite rule numbers) and a concrete fix. Lead with runtime
 bugs, then design violations. Common findings: query
