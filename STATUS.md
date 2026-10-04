@@ -46,12 +46,15 @@ a modernized version of that library into Go projects (copy-in model).
 
       Iteration 2 is probably a bit better (5 of the 6 queries that changed went up) but
       not proven, and recall is still very low for both, so wording isn't the whole story.
-      The results don't record how a miss ended (answered without the skill, 8-tool-call
-      cap, or 90 s timeout).
-      Next: trace ~6 runs on 2–3 queries that never triggered (inventory review, orders
-      refund, shared `*Order` pointer), logging every tool call and how the run ended.
-      That decides whether to fix the eval again or rewrite the description. Hold off on
-      another loop or the Opus check until then. Commands used for the comparison:
+      Traces of 6 runs on 3 queries that scored 0/9 in the eval
+      (`results/2026-10-04-sonnet/traces.json`): with the current description, Claude
+      loaded the skill in 5 of 6, four of them as its first action. The eval was the
+      problem again: parallel runs shared one project, so each session saw up to 5
+      identical skill copies, and loading another run's copy counted as a miss. Fixed:
+      each run now gets its own copy of the project.
+      Next: re-run both comparison commands below in a fresh usage window (~120
+      sessions; paid extra usage is on, so watch the limit). Expect high recall from
+      both; if one still clearly wins, check it on Opus before applying. Commands:
       ```sh
       evals/cqrs-eda/trigger/run.sh eval --model claude-sonnet-5-5 --num-workers 5 --verbose
       evals/cqrs-eda/trigger/run.sh eval --model claude-sonnet-5-5 --num-workers 5 --verbose \
