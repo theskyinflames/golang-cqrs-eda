@@ -30,6 +30,11 @@ copies stay out of `~/.claude/commands`.
 - **A run stops after 8 tool calls that don't load the skill**
   (`MAX_TOOL_CALLS`), or as soon as it loads, to bound cost.
 - **The default timeout per query is 90 s**, not 30 s.
+- **Each run gets its own copy of the project.** Upstream runs every query in
+  one shared project, so parallel runs each add a skill copy to the same
+  `.claude/commands`. Claude then sees several identical skills, and loading
+  another run's copy counted as a miss. With 5 workers this held recall near
+  1 in 5 (see `results/2026-10-04-sonnet/traces.json`).
 
 Upstream also picks the project root by walking up from the current directory
 to the first `.claude/`. Run from inside `~/.claude`, that resolves to `~`:

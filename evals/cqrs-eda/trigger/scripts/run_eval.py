@@ -10,8 +10,10 @@ import argparse
 import json
 import os
 import select
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -54,7 +56,15 @@ def run_single_query(
     """
     unique_id = uuid.uuid4().hex[:8]
     clean_name = f"{skill_name}-skill-{unique_id}"
-    project_commands_dir = Path(project_root) / ".claude" / "commands"
+    # PATCH: run each query in its own copy of the project. With a shared
+    # project, parallel runs each add a skill copy to the same
+    # .claude/commands, so Claude sees several identical skills and loading
+    # another run's copy counted as a miss.
+    run_root = Path(tempfile.mkdtemp(prefix=f"{clean_name}-"))
+    shutil.rmtree(run_root)
+    shutil.copytree(project_root, run_root, symlinks=True,
+                    ignore=lambda d, names: ["commands"] if Path(d).name == ".claude" else [])
+    project_commands_dir = run_root / ".claude" / "commands"
     command_file = project_commands_dir / f"{clean_name}.md"
 
     try:
@@ -88,7 +98,7 @@ def run_single_query(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
-            cwd=project_root,
+            cwd=run_root,
             env=env,
         )
 
@@ -153,8 +163,7 @@ def run_single_query(
 
         return triggered
     finally:
-        if command_file.exists():
-            command_file.unlink()
+        shutil.rmtree(run_root, ignore_errors=True)
 
 
 def run_eval(
