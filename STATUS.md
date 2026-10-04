@@ -39,6 +39,7 @@ a modernized version of that library into Go projects (copy-in model).
       than in a random project. Earlier numbers under `results/2026-10-04-sonnet/` were
       measured with the broken eval and aren't comparable.
 - [x] Push to GitHub (`theskyinflames/golang-cqrs-eda`)
+- [x] Note in the old `theskyinflames/cqrs-eda` repo (still GPL-3.0) pointing to this plugin
 
 ## Pending
 
@@ -47,7 +48,6 @@ a modernized version of that library into Go projects (copy-in model).
 - [ ] **Quality eval iteration 4** to validate rule 0 (checks 1.15, 2.13, 3.12 not run yet)
       and the review wording change (no rule numbers, runtime bugs first).
 - [ ] Optional reviewer agent (`agents/cqrs-reviewer.md`); covered by SKILL.md section 6 for now.
-- [ ] Note in the old `theskyinflames/cqrs-eda` repo (still GPL-3.0) pointing to this plugin.
 - [ ] Use the plugin in real projects:
       `/plugin marketplace add theskyinflames/golang-cqrs-eda`, then
       `/plugin install cqrs-eda@theskyinflames`.
