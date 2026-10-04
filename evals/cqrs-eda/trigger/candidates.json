@@ -1,0 +1,35 @@
+{
+  "source": "run_loop on claude-sonnet-5-5, 2026-10-04, upstream (unpatched) eval: first-tool-call detection, 30 s timeout, run from ~. Scores are not comparable with the patched eval.",
+  "candidates": [
+    {
+      "iteration": 1,
+      "train": "6/12",
+      "test": "4/8",
+      "description": "CQRS, event-driven (EDA) and DDD conventions for Go services, with copy-in platform packages (command/query/event buses, typed generic handlers, middleware for logging, transactions and event publishing, aggregate roots). Use this skill whenever working on a Go service that has, or should have, commands, queries, command/query handlers, domain events, event handlers or policies, aggregates, a command bus or event bus, or a unit of work — including when the user just asks to \"add an endpoint that creates/updates X\", \"react when Y happens\", \"add a use case\", or \"set up a new Go service\" with DDD/hexagonal structure, even if CQRS is never named. Also use it to review Go code for CQRS/EDA violations."
+    },
+    {
+      "iteration": 2,
+      "train": "6/12",
+      "test": "5/8",
+      "description": "Use this skill for any feature work, bug fix, refactor or scaffolding in a Go backend that uses, or should use, a command/query/event architecture (CQRS, event-driven, DDD, hexagonal), even when none of those terms appear. Trigger on: adding or changing a use case or endpoint that writes or reads business state; enforcing a business rule; needing other parts of the system to be notified or to react when something happens (domain events, policies, cross-context or cross-service reactions); separating reads from writes or decoupling side effects from a handler; fixing HTTP status codes or error logging in handlers; bootstrapping a new Go microservice or bounded context; or working in code that imports internal/platform/cqrs, buses, aggregates or unit of work. Also use it to review Go code for CQRS/EDA violations. Skip generic Go tasks (logging, benchmarks, plain Kafka consumers), non-Go code, and conceptual-only questions."
+    },
+    {
+      "iteration": 3,
+      "train": "6/12",
+      "test": "5/8",
+      "description": "Go backend work on services built around commands, queries and domain events (CQRS / event-driven / DDD / hexagonal). Use it when the user is in a Go service and wants to: add a feature, endpoint or use case that changes or reads business state (e.g. \"refund an order\", \"mark shipment delivered\"); enforce a business rule; make one part of the system react to something happening elsewhere (\"when X happens, do Y\", \"notify accounting\", cross-service or cross-context reactions); split reads from writes or decouple side effects from a handler; fix HTTP status codes or log levels for domain errors in handlers (404/409 showing as 500/ERROR); or start a new Go microservice or bounded context. Also applies when code uses internal/platform/cqrs, command/event buses, aggregates or a unit of work, or when reviewing Go code for CQRS/EDA violations, even if those terms are never mentioned. Skip generic Go tasks (slog logging, benchmarks, standalone Kafka consumers), non-Go code, and purely conceptual questions."
+    },
+    {
+      "iteration": 4,
+      "train": "6/12",
+      "test": "5/8",
+      "description": "Use this skill for hands-on changes in a Go backend organized around commands, queries and domain events, even if CQRS is never mentioned. Reach for it when a Go task involves business operations: adding or changing an endpoint, use case or business rule (refund, cancel, mark delivered, subscribe); making something happen in response to another event or service (\"when X happens, do Y\", notify another context, revert state after a failure); separating reads from writes or decoupling side effects from a handler; mapping domain errors to HTTP codes and log levels (404/409 showing as 500/ERROR); or scaffolding a new Go microservice or bounded context. Strong signals: internal/platform/cqrs, aggregates raising domain events, command/event buses, unit of work, DDD or hexagonal layout. Prefer it over generic Go guidance for such tasks. Skip unrelated Go work (slog setup, benchmarks, standalone Kafka consumers), non-Go code, and purely conceptual questions."
+    },
+    {
+      "iteration": 5,
+      "train": "6/12",
+      "test": "4/8",
+      "description": "Go microservice conventions for CQRS, event-driven and DDD code: commands, queries, command/event buses, domain events, policies, aggregates, unit of work, and the internal/platform/cqrs package. Use it, in preference to generic Go skills like gopilot, whenever a Go task touches business behavior in a service: new or changed endpoints, use cases or business rules (refund, cancel, deliver, subscribe); \"when X happens, do Y\" reactions between aggregates, contexts or services; accounting/notification side effects; splitting reads from writes or decoupling a handler's side effects; fixing 404/409 returned as 500 or logged as ERROR; reviewing such code; or starting a new Go service or bounded context. Triggers even if CQRS is never mentioned. Not for slog setup, benchmarks, standalone Kafka consumers, non-Go code, or purely conceptual questions."
+    }
+  ]
+}

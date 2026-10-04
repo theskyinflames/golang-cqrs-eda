@@ -21,16 +21,22 @@ a modernized version of that library into Go projects (copy-in model).
 - [x] Rule 0: every use case is a command or query in the application layer;
       eval checks 1.15, 2.13 and 3.12 added for it
 - [x] Trigger eval set: 20 queries (10 should trigger, 10 near-misses), reviewed
+- [x] Trigger eval fixed to count skill loads anywhere in the run, inside a Go fixture
+      (`evals/cqrs-eda/trigger/`)
 - [x] Push to GitHub (`theskyinflames/golang-cqrs-eda`)
 
 ## Pending
 
-- [ ] **Trigger description optimization.** The loop crashed twice on the usage limit
-      (iteration 3 of 5). Measured so far: precision 100%, recall 0–11%. The low recall is
-      largely an artifact of the eval: a query counts as not triggered if Claude's first tool
-      call isn't loading the skill, and repo-grounded queries make Claude explore files first.
-      Next: rerun after the limit resets; judge mainly on queries that don't depend on repo
-      files; review the two candidate descriptions the loop proposed before applying any.
+- [ ] **Trigger description optimization.** A full 5-iteration loop on Sonnet 5.5
+      (2026-10-04) found no clear winner: precision stayed 100%, recall 17–33%, and the best
+      candidate (iteration 2) beat the current description by one held-out query.
+      The low recall came from the eval, not the description: upstream skill-creator counts
+      a miss whenever the first tool call isn't the skill, its 30 s timeout is short, and run
+      from inside `~/.claude` it used `~` as the project, so queries saw no Go code.
+      Fixed in `evals/cqrs-eda/trigger/` (see its README); candidates in `candidates.json`.
+      Next: `run.sh eval` on Sonnet for the current description and iteration 2's
+      (~120 short sessions, needs a fresh usage window); if one clearly wins, check it on
+      Opus before applying.
 - [ ] **Quality eval iteration 4** to validate rule 0 (checks 1.15, 2.13, 3.12 not run yet)
       and the review wording change (no rule numbers, runtime bugs first).
 - [ ] Optional reviewer agent (`agents/cqrs-reviewer.md`); covered by SKILL.md section 6 for now.
