@@ -51,11 +51,23 @@ a modernized version of that library into Go projects (copy-in model).
         SKILL.md section 6 now says to read where the reviewed code is wired.
       - `evals/cqrs-eda/README.md`: quality eval workspaces must live outside the repo,
         since edits inside a `--plugin-dir` are refused as sensitive files.
+- [x] Trigger description checked on Opus 5.5 (2026-10-05,
+      `trigger/results/2026-10-05-opus/`). Kept as is: recall is perfect on both models.
+
+      | | Sonnet 5.5 | Opus 5.5 |
+      |---|---|---|
+      | Queries passed | 20/20 | 16/20 |
+      | Should-trigger runs that loaded the skill | 30/30 | 30/30 |
+      | Near-miss runs that loaded the skill | 3/30 | 11/30 |
+
+      Opus failed 4 near-misses: Kafka consumer (3/3), cobra CLI (3/3), event store
+      schema (3/3), `slog` logging (2/3). The fixture is a CQRS shop, so the first three
+      are close to the skill's scope there. The cobra CLI miss means Opus reads "new Go
+      service" as "new Go project". If the extra loads matter, tune with
+      `run.sh loop --model claude-opus-5-5` and re-check Sonnet.
 
 ## Pending
 
-- [ ] Optional: check the new description on Opus (~60 sessions) with
-      `evals/cqrs-eda/trigger/run.sh eval --model claude-opus-5-5 --num-workers 5 --verbose`.
 - [ ] Optional reviewer agent (`agents/cqrs-reviewer.md`); covered by SKILL.md section 6 for now.
 - [ ] Use the plugin in real projects:
       `/plugin marketplace add theskyinflames/golang-cqrs-eda`, then
