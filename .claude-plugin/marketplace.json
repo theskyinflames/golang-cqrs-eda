@@ -19,6 +19,23 @@
         "eda",
         "ddd"
       ]
+    },
+    {
+      "name": "hexagonal",
+      "source": {
+        "source": "github",
+        "repo": "theskyinflames/hexagonal-arch"
+      },
+      "description": "Hexagonal architecture (ports and adapters) for Go services: layout, ports, adapters, composition root and boundary tests, with scaffolding. Pairs with cqrs-eda.",
+      "version": "0.1.0",
+      "category": "development",
+      "keywords": [
+        "go",
+        "golang",
+        "hexagonal",
+        "ports-and-adapters",
+        "ddd"
+      ]
     }
   ]
 }
