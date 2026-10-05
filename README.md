@@ -20,6 +20,11 @@ In Claude Code:
 Requires Go 1.24+. On Go 1.24–1.26 the platform uses `github.com/google/uuid`;
 from Go 1.27 it uses the stdlib `uuid`.
 
+The same marketplace also lists
+[hexagonal](https://github.com/theskyinflames/hexagonal-arch), which covers the
+ports, adapters and wiring around the core that cqrs-eda builds:
+`/plugin install hexagonal@theskyinflames`.
+
 ## What you get
 
 - **`cqrs-eda` skill.** Loads when you work on a Go service with commands,
