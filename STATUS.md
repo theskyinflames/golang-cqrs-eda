@@ -66,12 +66,16 @@ a modernized version of that library into Go projects (copy-in model).
       service" as "new Go project". If the extra loads matter, tune with
       `run.sh loop --model claude-opus-5-5` and re-check Sonnet.
 
+- [x] Reviewer agent (`agents/cqrs-reviewer.md`), read-only (Read, Grep, Glob, Bash);
+      SKILL.md section 6 delegates large reviews to it. Tested on Opus 5.5 (2026-10-05) on
+      `fixtures/billing-subtle` with eval 3's prompt: 12/12, no files changed, $0.50. It
+      also found two real bugs the eval didn't plant (no code creates customers; nothing
+      handles `shipping.schedule_shipment`). Its checklist duplicates SKILL.md sections 4
+      and 6; keep them in sync. To re-run, put the prompt right after `-p`:
+      `--allowedTools` takes every argument after it as a tool name, prompt included.
+
 ## Pending
 
-- [ ] Reviewer agent (`agents/cqrs-reviewer.md`) written, read-only (Read, Grep, Glob,
-      Bash). Not tested yet: run it on `evals/cqrs-eda/fixtures/billing-subtle` and score it
-      against eval 3's assertions. Its checklist duplicates SKILL.md sections 4 and 6;
-      keep them in sync.
 - [ ] Use the plugin in real projects:
       `/plugin marketplace add theskyinflames/golang-cqrs-eda`, then
       `/plugin install cqrs-eda@theskyinflames`.
@@ -84,6 +88,7 @@ a modernized version of that library into Go projects (copy-in model).
 | 2 | 100% | 79% | sharper evals; repositories return a domain `ErrNotFound` |
 | 3 | 100% | 89% | expected rejections log at Info; repositories persist state, not aggregates |
 | 4 | 39/40, then 12/12 on the eval 3 re-run | not run | `install.sh` on bash 3.2; reviews read `main.go` wiring |
+| Reviewer agent | 12/12 on eval 3 | — | none |
 
 The skill's clear win is new services (12/12 vs 8/12 in iteration 3). In projects
 that already follow the conventions, Claude copies them even without the skill.
