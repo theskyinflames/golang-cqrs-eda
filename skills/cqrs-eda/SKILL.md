@@ -157,7 +157,8 @@ section 7 of `references/patterns.md`, then add use cases as above.
 
 ## 6. Reviewing code
 
-When asked to review, check the rules in section 4 (start with rule 0: any
+For a large review (a whole service or several contexts), delegate to the
+`cqrs-reviewer` agent, which carries this checklist. Otherwise, check the rules in section 4 (start with rule 0: any
 adapter, job or policy that reaches the domain or a repository without going
 through a command or query). Also read where the code under review is wired
 (`cmd/*/main.go` or the helpers it calls), even if the user named only one

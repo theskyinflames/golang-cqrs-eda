@@ -68,7 +68,10 @@ a modernized version of that library into Go projects (copy-in model).
 
 ## Pending
 
-- [ ] Optional reviewer agent (`agents/cqrs-reviewer.md`); covered by SKILL.md section 6 for now.
+- [ ] Reviewer agent (`agents/cqrs-reviewer.md`) written, read-only (Read, Grep, Glob,
+      Bash). Not tested yet: run it on `evals/cqrs-eda/fixtures/billing-subtle` and score it
+      against eval 3's assertions. Its checklist duplicates SKILL.md sections 4 and 6;
+      keep them in sync.
 - [ ] Use the plugin in real projects:
       `/plugin marketplace add theskyinflames/golang-cqrs-eda`, then
       `/plugin install cqrs-eda@theskyinflames`.
